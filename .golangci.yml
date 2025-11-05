@@ -86,6 +86,7 @@ issues:
         - errcheck
         - dupl
         - gosec
+        - depguard
     - path: internal/openreports/processor.go
       linters:
         - funlen
