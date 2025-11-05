@@ -9,8 +9,6 @@ linters-settings:
   funlen:
     lines: 100
     statements: 50
-  gci:
-    # Local prefixes configuration removed - not supported in current version
   goconst:
     min-len: 2
     min-occurrences: 2
@@ -31,14 +29,7 @@ linters-settings:
     min-complexity: 15
   goimports:
     local-prefixes: github.com/henrikrexed/securitylogeventprocessor
-  golint:
-    min-confidence: 0
-  gomnd:
-    settings:
-      mnd:
-        checks: argument,case,condition,operation,return,assign
-  govet:
-    # check-shadowing removed - not supported in current version
+  govet: {}
   lll:
     line-length: 140
   misspell:
