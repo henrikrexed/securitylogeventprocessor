@@ -1,0 +1,92 @@
+site_name: Security Log Event Processor
+site_description: OpenTelemetry Collector processor for transforming security logs into security events
+site_author: Dynatrace
+site_url: https://github.com/dynatrace/securitylogeventprocessor
+
+repo_name: dynatrace/securitylogeventprocessor
+repo_url: https://github.com/dynatrace/securitylogeventprocessor
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - admonition
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - attr_list
+  - md_in_html
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Overview: getting-started/overview.md
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quick-start.md
+  - Configuration:
+    - Processor Configuration: configuration/processor-config.md
+    - OpenReports Processor: configuration/openreports.md
+    - Receivers: configuration/receivers.md
+    - Exporters: configuration/exporters.md
+  - Deployment:
+    - Overview: deployment/overview.md
+    - Docker: deployment/docker.md
+    - Kubernetes: deployment/kubernetes.md
+    - RBAC Setup: deployment/rbac.md
+  - Processors:
+    - Overview: processors/overview.md
+    - OpenReports: processors/openreports.md
+  - Examples:
+    - Basic Example: examples/basic.md
+    - OpenReports with k8sobjects: examples/openreports-k8sobjects.md
+    - Multi-Processor: examples/multi-processor.md
+  - Troubleshooting: troubleshooting.md
+  - Reference:
+    - API Reference: reference/api.md
+    - Field Mapping: reference/field-mapping.md
+    - Metrics: reference/metrics.md
+
+plugins:
+  - search
+  # - git-revision-date-localized:
+
+extra:
+  version:
+    provider: mike
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/dynatrace/securitylogeventprocessor
+

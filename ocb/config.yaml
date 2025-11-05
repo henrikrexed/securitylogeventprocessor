@@ -1,0 +1,58 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+  
+  # Kubernetes Objects Receiver - Collects OpenReports Custom Resources
+  k8sobjects:
+    auth_type: serviceAccount
+    objects:
+      # Watch OpenReports Custom Resources
+      - name: openreports
+        mode: watch
+        api_group: openreports.io
+        api_version: v1alpha1
+        resource: reports
+        # Optional: filter by namespace
+        # namespaces: [default, production]
+        # Optional: filter by label selector
+        # label_selector: environment in (production,staging)
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+  
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 4000
+  
+  # Security Event Processor
+  securityevent:
+    processors:
+      openreports:
+        enabled: true
+        status_filter:
+          - "fail"
+          - "error"
+
+exporters:
+  otlp:
+    endpoint: http://localhost:4317
+    tls:
+      insecure: true
+  
+  logging:
+    loglevel: info
+
+service:
+  pipelines:
+    logs:
+      receivers: [k8sobjects, otlp]
+      processors: [memory_limiter, securityevent, batch]
+      exporters: [otlp, logging]
+  
+

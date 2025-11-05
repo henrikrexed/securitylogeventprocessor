@@ -1,0 +1,25 @@
+dist:
+  name: otelcol-securityevent-simple
+  description: OpenTelemetry Collector with Security Event Processor (Minimal)
+  output_path: ./dist
+  otelcol_version: v0.138.0
+  module: github.com/dynatrace/securitylogeventprocessor
+
+receivers:
+  - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.138.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8sobjectsreceiver v0.138.0
+
+processors:
+  - gomod: go.opentelemetry.io/collector/processor/batchprocessor v0.138.0
+  - gomod: go.opentelemetry.io/collector/processor/memorylimiterprocessor v0.138.0
+  # Custom Security Event Processor
+  - gomod: github.com/henrikrexed/securitylogeventprocessor  v0.1.0
+exporters:
+  - gomod: go.opentelemetry.io/collector/exporter/otlpexporter v0.138.0
+  - gomod: go.opentelemetry.io/collector/exporter/debugexporter v0.138.0
+
+
+
+replaces:
+  - github.com/henrikrexed/securitylogeventprocessor  => /app
+

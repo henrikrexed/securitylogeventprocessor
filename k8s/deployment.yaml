@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otelcol-securityevent
+  namespace: otelcol-securityevent
+  labels:
+    app.kubernetes.io/name: otelcol-securityevent
+    app.kubernetes.io/component: collector
+    app.kubernetes.io/version: "0.1.0"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: otelcol-securityevent
+      app.kubernetes.io/component: collector
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: otelcol-securityevent
+        app.kubernetes.io/component: collector
+        app.kubernetes.io/version: "0.1.0"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8888"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: otelcol-securityevent
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 10001
+      containers:
+      - name: otelcol
+        image: hrexed/otelcol-securityevents:0.1
+        imagePullPolicy: IfNotPresent
+        command:
+          - /otelcol-securityevent
+        args:
+          - --config=/etc/otelcol/config.yaml
+        env:
+        - name: OTEL_LOG_LEVEL
+          value: "info"
+        - name: OTLP_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: otelcol-securityevent-config
+              key: otlp_endpoint
+              optional: true
+        - name: OTLP_TLS_INSECURE
+          value: "false"
+        ports:
+        - name: otlp-grpc
+          containerPort: 4317
+          protocol: TCP
+        - name: otlp-http
+          containerPort: 4318
+          protocol: TCP
+        - name: zpages
+          containerPort: 55679
+          protocol: TCP
+        - name: healthcheck
+          containerPort: 13133
+          protocol: TCP
+        - name: pprof
+          containerPort: 1777
+          protocol: TCP
+        volumeMounts:
+        - name: config
+          mountPath: /etc/otelcol
+          readOnly: true
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 13133
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 13133
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      volumes:
+      - name: config
+        configMap:
+          name: otelcol-securityevent-config
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - otelcol-securityevent
+              topologyKey: kubernetes.io/hostname
+

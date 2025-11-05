@@ -1,0 +1,42 @@
+# Git
+.git
+.gitignore
+.github
+
+# IDE
+.idea
+.vscode
+*.iml
+
+# Build artifacts
+dist/
+build/
+*.out
+*.html
+coverage.*
+
+# Dependencies
+vendor/
+node_modules/
+
+# Test files
+*_test.go
+testdata/
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# Scripts
+scripts/
+*.sh
+
+# OCB
+ocb/dist/
+ocb/build/
+
+# Docker
+docker-compose.yml
+.dockerignore
+

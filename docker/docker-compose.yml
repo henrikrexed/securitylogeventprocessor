@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  otelcol-securityevent:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: otelcol-securityevent:latest
+    container_name: otelcol-securityevent
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "55679:55679" # zpages extension
+      - "13133:13133" # health check extension
+      - "1777:1777"   # pprof extension
+    volumes:
+      - ../ocb/config.yaml:/etc/otelcol/config.yaml:ro
+      - ./logs:/var/log/otelcol
+    environment:
+      - OTEL_LOG_LEVEL=info
+      # Uncomment to use OTLP exporter for testing
+      # - OTLP_ENDPOINT=http://otlp-exporter:4317
+      # - OTLP_TLS_INSECURE=true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:13133/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - otel-network
+    # Uncomment to enable dependency on OTLP exporter
+    # depends_on:
+    #   otlp-exporter:
+    #     condition: service_started
+
+  # Optional: OTLP exporter endpoint for testing
+  otlp-exporter:
+    image: otel/opentelemetry-collector:latest
+    container_name: otlp-exporter
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./otlp-exporter-config.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "4319:4317"   # OTLP gRPC
+      - "4320:4318"   # OTLP HTTP
+    networks:
+      - otel-network
+    profiles:
+      - testing
+    restart: unless-stopped
+
+networks:
+  otel-network:
+    driver: bridge
+
