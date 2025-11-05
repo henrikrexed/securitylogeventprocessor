@@ -368,7 +368,7 @@ func TestTransformToSecurityEvent_FieldMapping(t *testing.T) {
 	// Verify compliance fields
 	assert.Equal(t, "check-container-resources", attrs.AsRaw()["compliance.control"])
 	assert.Equal(t, "all-containers-need-requests-and-limits", attrs.AsRaw()["compliance.requirements"])
-	assert.Equal(t, "FAILED", attrs.AsRaw()["compliance.status"])
+	assert.Equal(t, "NON_COMPLIANT", attrs.AsRaw()["compliance.status"])
 	assert.Equal(t, "Pod Security Standards (Baseline)", attrs.AsRaw()["compliance.standards"])
 
 	// Verify risk fields
