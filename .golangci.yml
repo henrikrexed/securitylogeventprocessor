@@ -92,6 +92,12 @@ issues:
     - path: config.go
       linters:
         - depguard
+    - path: processor.go
+      linters:
+        - depguard
+    - path: factory.go
+      linters:
+        - depguard
     - text: "Error return value of .((os\\.)?std(out|err)\\..*|.*Close|.*Flush|os\\.Remove(All)?|.*printf?|os\\.(Un)?Setenv). is not checked"
       linters:
         - errcheck
