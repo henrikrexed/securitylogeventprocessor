@@ -21,6 +21,8 @@ const (
 	riskLevelHigh     = "HIGH"
 	riskLevelMedium   = "MEDIUM"
 	riskLevelLow      = "LOW"
+	riskLevelCritical = "CRITICAL"
+	complianceManual  = "MANUAL"
 	k8sKindPod        = "Pod"
 	k8sKindDeployment = "Deployment"
 	missingValue      = "missing"
@@ -42,6 +44,8 @@ func NewProcessor(logger *zap.Logger, config *Config) (*Processor, error) {
 
 // ProcessLogRecord processes a single log record and transforms it into multiple security events
 // Returns a slice of new log records (one per result) or nil if this is not an OpenReports log
+//
+//nolint:gocyclo // Complex log parsing and transformation with nested conditionals and loops
 func (p *Processor) ProcessLogRecord(ctx context.Context, logRecord *plog.LogRecord, resource pcommon.Resource, scopeLogs plog.ScopeLogs) ([]plog.LogRecord, error) {
 	// Check if this is an OpenReports log by looking for the kind field
 	attrs := logRecord.Attributes()
@@ -335,6 +339,8 @@ type Timestamp struct {
 }
 
 // transformToSecurityEvent transforms a result into a security event log record
+//
+//nolint:gocyclo // Complex field mapping with multiple conditional branches for schema transformation
 func (p *Processor) transformToSecurityEvent(logRecord *plog.LogRecord, result Result, metadata map[string]interface{}, originalAttrs pcommon.Map) {
 	attrs := logRecord.Attributes()
 
@@ -457,7 +463,7 @@ func (p *Processor) transformToSecurityEvent(logRecord *plog.LogRecord, result R
 func mapSeverityToRiskLevel(severity string) string {
 	switch severity {
 	case "critical":
-		return "CRITICAL"
+		return riskLevelCritical
 	case "high":
 		return riskLevelHigh
 	case "medium":
@@ -473,7 +479,7 @@ func mapSeverityToRiskLevel(severity string) string {
 // calculateRiskScore calculates the risk score based on risk level
 func calculateRiskScore(riskLevel string) float64 {
 	switch riskLevel {
-	case "CRITICAL":
+	case riskLevelCritical:
 		return 10.0
 	case riskLevelHigh:
 		return 8.9
@@ -494,11 +500,11 @@ func mapResultToComplianceStatus(result string) string {
 	case resultStatusFail:
 		return "FAILED"
 	case resultStatusError:
-		return "MANUAL" // errors may need manual review
+		return complianceManual // errors may need manual review
 	case resultStatusSkip:
 		return "NOT_RELEVANT"
 	default:
-		return "MANUAL" // default for unknown statuses
+		return complianceManual // default for unknown statuses
 	}
 }
 
@@ -511,6 +517,8 @@ type workloadInfo struct {
 }
 
 // extractWorkloadInfo extracts workload information from owner references or pod name
+//
+//nolint:gocyclo // Complex workload extraction logic with multiple nested conditionals for K8s metadata parsing
 func extractWorkloadInfo(attrs pcommon.Map, podName string, namespace string) workloadInfo {
 	info := workloadInfo{}
 	info.namespace = namespace // Workload namespace is the same as pod namespace
@@ -615,6 +623,8 @@ func splitPodName(podName string) []string {
 }
 
 // copyK8sFields copies all k8s.* fields from the original attributes
+//
+//nolint:gocyclo // Complex field copying with multiple conditional branches for K8s attribute mapping
 func copyK8sFields(targetAttrs pcommon.Map, originalAttrs pcommon.Map, metadata map[string]interface{}) {
 	// Copy k8s.* fields from original attributes
 	originalAttrs.Range(func(key string, value pcommon.Value) bool {
@@ -706,23 +716,4 @@ func (p *Processor) isStatusAllowed(status string) bool {
 	}
 
 	return false
-}
-
-// putAttributeValue sets an attribute value based on the type
-func putAttributeValue(attrs pcommon.Map, key string, value interface{}) {
-	switch v := value.(type) {
-	case string:
-		attrs.PutStr(key, v)
-	case int:
-		attrs.PutInt(key, int64(v))
-	case int64:
-		attrs.PutInt(key, v)
-	case float64:
-		attrs.PutDouble(key, v)
-	case bool:
-		attrs.PutBool(key, v)
-	default:
-		// Convert to string for other types
-		attrs.PutStr(key, fmt.Sprintf("%v", v))
-	}
 }

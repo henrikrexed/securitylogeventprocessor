@@ -112,6 +112,8 @@ func createProcessorMetrics(meter metric.Meter) (*processorMetrics, error) {
 }
 
 // processLogs processes the incoming logs and transforms them into security events
+//
+//nolint:gocyclo // Complex transformation logic with multiple nested iterations and conditionals
 func (p *securityEventProcessor) processLogs(ctx context.Context, ld plog.Logs) (plog.Logs, error) {
 	// Count incoming logs
 	incomingCount := int64(0)

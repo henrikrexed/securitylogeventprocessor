@@ -89,6 +89,9 @@ issues:
     - path: internal/openreports/processor.go
       linters:
         - funlen
+    - path: config.go
+      linters:
+        - depguard
     - text: "Error return value of .((os\\.)?std(out|err)\\..*|.*Close|.*Flush|os\\.Remove(All)?|.*printf?|os\\.(Un)?Setenv). is not checked"
       linters:
         - errcheck

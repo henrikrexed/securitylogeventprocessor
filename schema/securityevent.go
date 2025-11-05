@@ -1,3 +1,5 @@
+// Package schema defines the security event schema used for transforming
+// various log formats (e.g., OpenReports) into standardized security events.
 package schema
 
 // SecurityEvent represents a standardized security event log entry
