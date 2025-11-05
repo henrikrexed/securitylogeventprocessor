@@ -39,7 +39,7 @@ RUN find dist/ -name "*.go" -type f | head -20 || true
 RUN ocb --config ocb/manifest.yaml --verbose
 
 # Runtime stage
-FROM alpine:3.19
+FROM alpine:3.22
 
 # Install runtime dependencies
 RUN apk --no-cache add \
