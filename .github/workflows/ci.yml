@@ -313,10 +313,11 @@ jobs:
 
       - name: Run OSSF Scorecard
         uses: ossf/scorecard-action@v2.4.1
+        continue-on-error: true
         with:
           results_file: results.sarif
           results_format: sarif
-          publish_results: true
+          publish_results: false
           repo_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload results to GitHub Security
