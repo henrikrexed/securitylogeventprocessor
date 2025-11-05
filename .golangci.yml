@@ -10,7 +10,7 @@ linters-settings:
     lines: 100
     statements: 50
   gci:
-    local-prefixes: github.com/henrikrexed/securitylogeventprocessor
+    # Local prefixes configuration removed - not supported in current version
   goconst:
     min-len: 2
     min-occurrences: 2
@@ -38,15 +38,12 @@ linters-settings:
       mnd:
         checks: argument,case,condition,operation,return,assign
   govet:
-    check-shadowing: true
+    # check-shadowing removed - not supported in current version
   lll:
     line-length: 140
-  maligned:
-    suggest-new: true
   misspell:
     locale: US
   nolintlint:
-    allow-leading-space: true
     allow-unused: false
     require-explanation: false
     require-specific: false
@@ -67,8 +64,6 @@ linters:
     - gocyclo
     - gofmt
     - goimports
-    - golint
-    - gomnd
     - goprintffuncname
     - gosec
     - gosimple
