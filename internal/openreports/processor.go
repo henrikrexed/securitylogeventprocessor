@@ -12,6 +12,20 @@ import (
 	"go.uber.org/zap"
 )
 
+// Constants for repeated string literals
+const (
+	resultStatusFail  = "fail"
+	resultStatusPass  = "pass"
+	resultStatusError = "error"
+	resultStatusSkip  = "skip"
+	riskLevelHigh     = "HIGH"
+	riskLevelMedium   = "MEDIUM"
+	riskLevelLow      = "LOW"
+	k8sKindPod        = "Pod"
+	k8sKindDeployment = "Deployment"
+	missingValue      = "missing"
+)
+
 // Processor handles transformation of OpenReports logs into security events
 type Processor struct {
 	logger *zap.Logger
@@ -40,7 +54,7 @@ func (p *Processor) ProcessLogRecord(ctx context.Context, logRecord *plog.LogRec
 				if exists {
 					return kindVal.AsString()
 				}
-				return "missing"
+				return missingValue
 			}()),
 			zap.String("trace_id", logRecord.TraceID().String()))
 		return nil, nil
@@ -55,7 +69,7 @@ func (p *Processor) ProcessLogRecord(ctx context.Context, logRecord *plog.LogRec
 				if exists {
 					return apiVersionVal.AsString()
 				}
-				return "missing"
+				return missingValue
 			}()),
 			zap.String("trace_id", logRecord.TraceID().String()))
 		return nil, nil
@@ -343,13 +357,13 @@ func (p *Processor) transformToSecurityEvent(logRecord *plog.LogRecord, result R
 
 	var eventDescription string
 	switch result.Result {
-	case "fail":
+	case resultStatusFail:
 		eventDescription = fmt.Sprintf("Policy violation on %s for rule %s", scopeName, rule)
-	case "pass":
+	case resultStatusPass:
 		eventDescription = fmt.Sprintf("Policy check passed on %s for rule %s", scopeName, rule)
-	case "error":
+	case resultStatusError:
 		eventDescription = fmt.Sprintf("Policy check error on %s for rule %s", scopeName, rule)
-	case "skip":
+	case resultStatusSkip:
 		eventDescription = fmt.Sprintf("Policy check skipped on %s for rule %s", scopeName, rule)
 	default:
 		eventDescription = fmt.Sprintf("Policy evaluation on %s for rule %s", scopeName, rule)
@@ -362,7 +376,7 @@ func (p *Processor) transformToSecurityEvent(logRecord *plog.LogRecord, result R
 
 	// Smartscape type - K8S_POD if scope.kind is Pod
 	scopeKind := getString(metadata, "scope.kind")
-	if scopeKind == "Pod" {
+	if scopeKind == k8sKindPod {
 		attrs.PutStr("smartscape.type", "K8S_POD")
 	}
 
@@ -445,14 +459,14 @@ func mapSeverityToRiskLevel(severity string) string {
 	case "critical":
 		return "CRITICAL"
 	case "high":
-		return "HIGH"
+		return riskLevelHigh
 	case "medium":
-		return "MEDIUM"
+		return riskLevelMedium
 	case "low":
-		return "LOW"
+		return riskLevelLow
 	default:
 		// Default to MEDIUM if severity is not provided or unknown
-		return "MEDIUM"
+		return riskLevelMedium
 	}
 }
 
@@ -461,11 +475,11 @@ func calculateRiskScore(riskLevel string) float64 {
 	switch riskLevel {
 	case "CRITICAL":
 		return 10.0
-	case "HIGH":
+	case riskLevelHigh:
 		return 8.9
-	case "MEDIUM":
+	case riskLevelMedium:
 		return 6.9
-	case "LOW":
+	case riskLevelLow:
 		return 3.9
 	default:
 		return 0.0
@@ -475,13 +489,13 @@ func calculateRiskScore(riskLevel string) float64 {
 // mapResultToComplianceStatus maps result.result to compliance.status
 func mapResultToComplianceStatus(result string) string {
 	switch result {
-	case "pass":
+	case resultStatusPass:
 		return "PASSED"
-	case "fail":
+	case resultStatusFail:
 		return "FAILED"
-	case "error":
+	case resultStatusError:
 		return "MANUAL" // errors may need manual review
-	case "skip":
+	case resultStatusSkip:
 		return "NOT_RELEVANT"
 	default:
 		return "MANUAL" // default for unknown statuses
@@ -558,7 +572,7 @@ func extractWorkloadInfo(attrs pcommon.Map, podName string, namespace string) wo
 				info.name = workloadName
 				// Default to Deployment if kind is not known
 				if info.kind == "" {
-					info.kind = "Deployment"
+					info.kind = k8sKindDeployment
 				}
 			}
 		}
@@ -570,12 +584,12 @@ func extractWorkloadInfo(attrs pcommon.Map, podName string, namespace string) wo
 // isWorkloadKind checks if a Kubernetes kind is a workload type
 func isWorkloadKind(kind string) bool {
 	workloadKinds := map[string]bool{
-		"Deployment":  true,
-		"StatefulSet": true,
-		"DaemonSet":   true,
-		"Job":         true,
-		"CronJob":     true,
-		"ReplicaSet":  true,
+		k8sKindDeployment: true,
+		"StatefulSet":     true,
+		"DaemonSet":       true,
+		"Job":             true,
+		"CronJob":         true,
+		"ReplicaSet":      true,
 	}
 	return workloadKinds[kind]
 }
@@ -620,7 +634,7 @@ func copyK8sFields(targetAttrs pcommon.Map, originalAttrs pcommon.Map, metadata 
 	if scopeKind, ok := metadata["scope.kind"]; ok {
 		kindStr := fmt.Sprintf("%v", scopeKind)
 		targetAttrs.PutStr("k8s.resource.kind", kindStr)
-		if kindStr == "Pod" {
+		if kindStr == k8sKindPod {
 			targetAttrs.PutStr("k8s.pod.name", getString(metadata, "scope.name"))
 		}
 	}
@@ -631,7 +645,7 @@ func copyK8sFields(targetAttrs pcommon.Map, originalAttrs pcommon.Map, metadata 
 	// Add workload fields
 	if workloadName, ok := metadata["workload.name"]; ok && workloadName != "" {
 		workloadKind := getString(metadata, "workload.kind")
-		if workloadKind == "Deployment" {
+		if workloadKind == k8sKindDeployment {
 			targetAttrs.PutStr("k8s.deployment.name", fmt.Sprintf("%v", workloadName))
 		} else if workloadKind == "StatefulSet" {
 			targetAttrs.PutStr("k8s.statefulset.name", fmt.Sprintf("%v", workloadName))
