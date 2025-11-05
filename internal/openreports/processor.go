@@ -14,18 +14,19 @@ import (
 
 // Constants for repeated string literals
 const (
-	resultStatusFail  = "fail"
-	resultStatusPass  = "pass"
-	resultStatusError = "error"
-	resultStatusSkip  = "skip"
-	riskLevelHigh     = "HIGH"
-	riskLevelMedium   = "MEDIUM"
-	riskLevelLow      = "LOW"
-	riskLevelCritical = "CRITICAL"
-	complianceManual  = "MANUAL"
-	k8sKindPod        = "Pod"
-	k8sKindDeployment = "Deployment"
-	missingValue      = "missing"
+	resultStatusFail       = "fail"
+	resultStatusPass       = "pass"
+	resultStatusError      = "error"
+	resultStatusSkip       = "skip"
+	riskLevelHigh          = "HIGH"
+	riskLevelMedium        = "MEDIUM"
+	riskLevelLow           = "LOW"
+	riskLevelCritical      = "CRITICAL"
+	complianceCompliant    = "COMPLIANT"
+	complianceNonCompliant = "NON_COMPLIANT"
+	k8sKindPod             = "Pod"
+	k8sKindDeployment      = "Deployment"
+	missingValue           = "missing"
 )
 
 // Processor handles transformation of OpenReports logs into security events
@@ -386,12 +387,9 @@ func (p *Processor) transformToSecurityEvent(logRecord *plog.LogRecord, result R
 		attrs.PutStr("smartscape.type", "K8S_POD")
 	}
 
-	// Map finding.severity to dt.security.risk.level
-	riskLevel := mapSeverityToRiskLevel(result.Severity)
-	attrs.PutStr("dt.security.risk.level", riskLevel)
-
-	// Calculate risk score based on level
-	riskScore := calculateRiskScore(riskLevel)
+	// Calculate risk score based on severity (for dt.security.risk.score)
+	// Note: finding.severity is set later from result.Severity
+	riskScore := calculateRiskScoreFromSeverity(result.Severity)
 	attrs.PutDouble("dt.security.risk.score", riskScore)
 
 	// Object fields
@@ -408,8 +406,10 @@ func (p *Processor) transformToSecurityEvent(logRecord *plog.LogRecord, result R
 	findingID := uuid.New().String()
 	attrs.PutStr("finding.id", findingID)
 
+	// Map severity to uppercase: CRITICAL, HIGH, MEDIUM, LOW
 	if result.Severity != "" {
-		attrs.PutStr("finding.severity", result.Severity)
+		severity := mapSeverityToUppercase(result.Severity)
+		attrs.PutStr("finding.severity", severity)
 	}
 
 	// Finding time.created from result timestamp
@@ -459,8 +459,8 @@ func (p *Processor) transformToSecurityEvent(logRecord *plog.LogRecord, result R
 	logRecord.Body().SetStr(result.Message)
 }
 
-// mapSeverityToRiskLevel maps finding severity to dt.security.risk.level
-func mapSeverityToRiskLevel(severity string) string {
+// mapSeverityToUppercase maps finding severity to uppercase format
+func mapSeverityToUppercase(severity string) string {
 	switch severity {
 	case "critical":
 		return riskLevelCritical
@@ -471,21 +471,21 @@ func mapSeverityToRiskLevel(severity string) string {
 	case "low":
 		return riskLevelLow
 	default:
-		// Default to MEDIUM if severity is not provided or unknown
+		// Return as-is if unknown, or default to MEDIUM
 		return riskLevelMedium
 	}
 }
 
-// calculateRiskScore calculates the risk score based on risk level
-func calculateRiskScore(riskLevel string) float64 {
-	switch riskLevel {
-	case riskLevelCritical:
+// calculateRiskScoreFromSeverity calculates the risk score based on finding severity
+func calculateRiskScoreFromSeverity(severity string) float64 {
+	switch severity {
+	case "critical":
 		return 10.0
-	case riskLevelHigh:
+	case "high":
 		return 8.9
-	case riskLevelMedium:
+	case "medium":
 		return 6.9
-	case riskLevelLow:
+	case "low":
 		return 3.9
 	default:
 		return 0.0
@@ -493,18 +493,15 @@ func calculateRiskScore(riskLevel string) float64 {
 }
 
 // mapResultToComplianceStatus maps result.result to compliance.status
+// Returns COMPLIANT for pass, NON_COMPLIANT for all other cases (fail, error, skip, unknown)
 func mapResultToComplianceStatus(result string) string {
 	switch result {
 	case resultStatusPass:
-		return "PASSED"
-	case resultStatusFail:
-		return "FAILED"
-	case resultStatusError:
-		return complianceManual // errors may need manual review
-	case resultStatusSkip:
-		return "NOT_RELEVANT"
+		return complianceCompliant
+	case resultStatusFail, resultStatusError, resultStatusSkip:
+		return complianceNonCompliant
 	default:
-		return complianceManual // default for unknown statuses
+		return complianceNonCompliant // default for unknown statuses
 	}
 }
 

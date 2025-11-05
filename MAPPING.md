@@ -61,7 +61,7 @@ This document describes how OpenReports log fields are mapped to the Security Ev
 | `compliance.control` | `result.rule` | Rule name from result |
 | `compliance.requirements` | `result.policy` | Policy name from result |
 | `compliance.standards` | `result.category` (if available) | Category from result, or omitted |
-| `compliance.status` | Mapped from `result.result` | Mapping: pass→PASSED, fail→FAILED, error→MANUAL, skip→NOT_RELEVANT |
+| `compliance.status` | Mapped from `result.result` | Mapping: pass→COMPLIANT, fail/error/skip/unknown→NON_COMPLIANT |
 
 ### Kubernetes Fields
 
@@ -84,11 +84,11 @@ This document describes how OpenReports log fields are mapped to the Security Ev
 
 The `result.result` field from OpenReports is mapped to `compliance.status`:
 
-- `"pass"` → `"PASSED"`
-- `"fail"` → `"FAILED"`
-- `"error"` → `"MANUAL"` (errors may need manual review)
-- `"skip"` → `"NOT_RELEVANT"`
-- Unknown → `"MANUAL"`
+- `"pass"` → `"COMPLIANT"`
+- `"fail"` → `"NON_COMPLIANT"`
+- `"error"` → `"NON_COMPLIANT"`
+- `"skip"` → `"NON_COMPLIANT"`
+- Unknown → `"NON_COMPLIANT"`
 
 ## Severity to Risk Level Mapping
 
