@@ -1,13 +1,14 @@
+---
 name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
   release:
-    types: [ created ]
-  workflow_dispatch:
+    types: [created]
+  workflow_dispatch: {}
 
 env:
   GO_VERSION: '1.24'
@@ -71,7 +72,8 @@ jobs:
       - name: Generate coverage report
         run: |
           go tool cover -func=coverage.out | tee coverage.txt
-          COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}')
+          COVERAGE=$(go tool cover -func=coverage.out | grep total |
+            awk '{print $3}')
           echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
 
       - name: Comment PR with coverage
@@ -279,7 +281,8 @@ jobs:
       - name: Scan Docker image with Trivy
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ghcr.io/${{ github.repository_owner }}/otelcol-securityevents:${{ github.sha }}
+          image-ref: >-
+            ghcr.io/${{ github.repository_owner }}/otelcol-securityevents:${{ github.sha }}
           format: 'sarif'
           output: 'trivy-image.sarif'
           severity: 'CRITICAL,HIGH'
