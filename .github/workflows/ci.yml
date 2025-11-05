@@ -123,10 +123,9 @@ jobs:
           fi
 
       - name: Run staticcheck
-        uses: dominikh/staticcheck-action@v1.3.2
-        with:
-          version: "2024.1"
-          args: -checks all ./...
+        run: |
+          go install honnef.co/go/tools/cmd/staticcheck@latest
+          staticcheck ./...
 
   # Security Scanning
   security-scan:
