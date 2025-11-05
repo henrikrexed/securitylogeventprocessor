@@ -226,7 +226,8 @@ jobs:
         run: |
           go install github.com/sonatype-nexus-community/nancy@latest || true
           if command -v nancy &> /dev/null; then
-            go list -json -deps | nancy sleuth || echo "Nancy check completed with warnings"
+            go list -json -deps | nancy sleuth ||
+              echo "Nancy check completed with warnings"
           else
             echo "Nancy installation failed, skipping nancy check"
           fi

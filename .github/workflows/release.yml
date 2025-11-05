@@ -56,7 +56,8 @@ jobs:
           tags: |
             ${{ env.DOCKER_IMAGE }}:${{ steps.version.outputs.tag }}
             ${{ env.DOCKER_IMAGE }}:latest
-            ghcr.io/${{ github.repository_owner }}/otelcol-securityevents:${{ steps.version.outputs.tag }}
+            >-
+              ghcr.io/${{ github.repository_owner }}/otelcol-securityevents:${{ steps.version.outputs.tag }}
             ghcr.io/${{ github.repository_owner }}/otelcol-securityevents:latest
           labels: |
             org.opencontainers.image.version=${{ steps.version.outputs.tag }}
